@@ -16,8 +16,6 @@ const attemptsEl = document.getElementById('attempts')
 const viewBtnEl = document.getElementById('view-btn')
 const answerBtnEl = document.getElementById('answer-btn')
 const shareBtnEl = document.getElementById('share-btn')
-const whatsappLinkEl = document.getElementById('whatsapp-link')
-const twitterLinkEl = document.getElementById('twitter-link')
 const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
@@ -57,12 +55,9 @@ const incrementAttempts = () => {
   attemptsEl.textContent = `Attempts: ${state.attempts}`
 }
 
-const shareText = () => `I solved today's A Question a Day challenge in ${state.attempts} attempts!`
-
-const updateShareLinks = () => {
-  const encoded = encodeURIComponent(shareText())
-  whatsappLinkEl.href = `https://wa.me/?text=${encoded}`
-  twitterLinkEl.href = `https://twitter.com/intent/tweet?text=${encoded}`
+const shareText = () => {
+  const attemptLabel = state.attempts === 1 ? 'attempt' : 'attempts'
+  return `🧠✅ I cracked today's A Question a Day quiz in ${state.attempts} ${attemptLabel}!\n\nThink you can beat me? 🚀 Try it now: https://aquestionaday.in ✨`
 }
 
 const showIncorrectPopup = (show) => {
@@ -165,7 +160,6 @@ answerBtnEl.addEventListener('click', () => {
   if (state.question.valid_answers.includes(digest)) {
     state.isCorrect = true
     showIncorrectPopup(false)
-    updateShareLinks()
     render()
     return
   }
@@ -187,7 +181,7 @@ shareBtnEl.addEventListener('click', async () => {
     }
   }
 
-  window.open(whatsappLinkEl.href, '_blank', 'noopener,noreferrer')
+  window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, '_blank', 'noopener,noreferrer')
 })
 
 const loadQuestion = async () => {
@@ -195,11 +189,10 @@ const loadQuestion = async () => {
     state.question = await fetchQuestion()
     state.questionLoaded = true
 
-    subtitleEl.textContent = `It's time for today's quiz!`
+    subtitleEl.textContent = `Let's get quizzing`
     questionTextEl.textContent = state.question.question_text
     viewBtnEl.disabled = false
     loadAttempts()
-    updateShareLinks()
     render()
   } catch (error) {
     console.error(error)
