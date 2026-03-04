@@ -124,6 +124,9 @@ const fetchQuestion = async () => {
 
   let payload = parseResponseBody(execution.responseBody);
 
+  console.log(typeof(payload))
+  console.log(payload)
+
   return {
     question_id: payload.data.id,
     question_text: payload.data.question,
