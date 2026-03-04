@@ -25,7 +25,7 @@ const popupEl = document.querySelector('.popup')
 const APPWRITE_FUNCTION_ENDPOINT =
   'https://cloud.appwrite.io/v1/functions/YOUR_FUNCTION_ID/executions'
 
-const APPWRITE_PROJECT_ID = 'YOUR_PROJECT_ID'
+const APPWRITE_PROJECT_ID = '69a6f4ab003617880c6a'
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
 const normalizeAnswer = (text) => text.trim().toLowerCase()
