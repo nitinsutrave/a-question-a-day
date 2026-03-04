@@ -93,6 +93,15 @@ const parseQuestionPayload = (payload) => {
   }
 }
 
+function parseResponseBody(obj) {
+  try {
+    return JSON.parse(obj);
+  } catch (err) {
+    console.error("Invalid JSON in responseBody:", err);
+    return null;
+  }
+}
+
 const fetchQuestion = async () => {
   const response = await fetch(APPWRITE_FUNCTION_ENDPOINT, {
     method: 'POST',
@@ -113,21 +122,7 @@ const fetchQuestion = async () => {
     throw new Error('Missing function response body')
   }
 
-  let payload = execution.responseBody
-
-  // Appwrite returns a JSON string
-  if (typeof payload === 'string') {
-    payload = JSON.parse(payload)
-  }
-
-  // Sometimes still stringified (escaped JSON)
-  if (typeof payload === 'string') {
-    payload = JSON.parse(payload)
-  }
-
-  if (!payload.success || !payload.data) {
-    throw new Error('Invalid function response')
-  }
+  let payload = parseResponseBody(payload);
 
   return {
     question_id: payload.data.id,
