@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A Question a Day</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="card">
+        <h1>A Question a Day</h1>
+
+        <p id="subtitle" class="subtitle">Loading today's question...</p>
+        <div id="error" class="error hidden"></div>
+
+        <div id="welcome-view">
+          <button id="view-btn" class="primary-btn" disabled>View</button>
+        </div>
+
+        <div id="question-view" class="hidden">
+          <article id="question-text" class="question-box"></article>
+
+          <label class="input-label" for="answer">Your answer</label>
+          <input
+            id="answer"
+            class="answer-input"
+            type="text"
+            placeholder="Type your answer here"
+          />
+
+          <button id="answer-btn" class="primary-btn">Answer</button>
+          <p id="attempts" class="attempts">Attempts: 0</p>
+        </div>
+
+        <div id="success-view" class="hidden">
+          <h2>You got it! 🎉</h2>
+          <p class="subtitle">Share your success with your friends.</p>
+          <div class="share-row">
+            <button id="share-btn" class="secondary-btn">Share</button>
+            <a id="whatsapp-link" class="secondary-btn link-btn" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a id="twitter-link" class="secondary-btn link-btn" href="#" target="_blank" rel="noopener noreferrer">X / Twitter</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="popup-backdrop" class="popup-backdrop hidden">
+      <div class="popup">
+        <p>You're not quite there yet</p>
+        <button id="try-again-btn" class="primary-btn">Try again</button>
+      </div>
+    </div>
+
+    <script src="./main.js"></script>
+  </body>
+</html>
