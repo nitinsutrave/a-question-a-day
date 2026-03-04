@@ -20,6 +20,9 @@ const whatsappLinkEl = document.getElementById('whatsapp-link')
 const twitterLinkEl = document.getElementById('twitter-link')
 const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
+const popupEl = document.querySelector('.popup')
+
+const QUESTION_ENDPOINTS = ['./api/question', '/api/question']
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
 const normalizeAnswer = (text) => text.trim().toLowerCase()
@@ -64,9 +67,36 @@ const showIncorrectPopup = (show) => {
 }
 
 const render = () => {
-  questionViewEl.classList.toggle('hidden', !state.questionLoaded || state.isCorrect || !questionViewEl.dataset.visible)
-  welcomeViewEl.classList.toggle('hidden', questionViewEl.dataset.visible === 'true' || state.isCorrect)
+  const questionVisible = questionViewEl.dataset.visible === 'true'
+  questionViewEl.classList.toggle('hidden', !state.questionLoaded || state.isCorrect || !questionVisible)
+  welcomeViewEl.classList.toggle('hidden', questionVisible || state.isCorrect)
   successViewEl.classList.toggle('hidden', !state.isCorrect)
+}
+
+const parseQuestionPayload = (payload) => {
+  if (!payload || typeof payload.question_id !== 'string' || typeof payload.question_text !== 'string' || !Array.isArray(payload.valid_answers)) {
+    throw new Error('Invalid question payload format')
+  }
+
+  return payload
+}
+
+const fetchQuestion = async () => {
+  for (const endpoint of QUESTION_ENDPOINTS) {
+    try {
+      const response = await fetch(endpoint)
+      if (!response.ok) {
+        continue
+      }
+
+      const payload = await response.json()
+      return parseQuestionPayload(payload)
+    } catch {
+      // try next endpoint
+    }
+  }
+
+  throw new Error('Unable to load question data')
 }
 
 viewBtnEl.addEventListener('click', () => {
@@ -101,7 +131,7 @@ answerBtnEl.addEventListener('click', () => {
 
 popupBackdropEl.addEventListener('click', () => showIncorrectPopup(false))
 tryAgainBtnEl.addEventListener('click', () => showIncorrectPopup(false))
-document.querySelector('.popup').addEventListener('click', (event) => event.stopPropagation())
+popupEl.addEventListener('click', (event) => event.stopPropagation())
 
 shareBtnEl.addEventListener('click', async () => {
   if (navigator.share) {
@@ -118,12 +148,7 @@ shareBtnEl.addEventListener('click', async () => {
 
 const loadQuestion = async () => {
   try {
-    const response = await fetch('./api/question')
-    if (!response.ok) {
-      throw new Error('Unable to load question data')
-    }
-
-    state.question = await response.json()
+    state.question = await fetchQuestion()
     state.questionLoaded = true
 
     subtitleEl.textContent = 'Challenge yourself with one thoughtful question.'
@@ -139,5 +164,6 @@ const loadQuestion = async () => {
   }
 }
 
+questionViewEl.dataset.visible = 'false'
 render()
 loadQuestion()
