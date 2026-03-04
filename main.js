@@ -23,7 +23,7 @@ const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
 
 const APPWRITE_FUNCTION_ENDPOINT =
-  'https://cloud.appwrite.io/v1/functions/YOUR_FUNCTION_ID/executions'
+  'https://api.aquestionaday.in/v1/functions/69a872f1001651517b77/executions'
 
 const APPWRITE_PROJECT_ID = '69a6f4ab003617880c6a'
 
