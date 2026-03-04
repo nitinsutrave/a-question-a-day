@@ -195,7 +195,7 @@ const loadQuestion = async () => {
     state.question = await fetchQuestion()
     state.questionLoaded = true
 
-    subtitleEl.textContent = 'Challenge yourself with one thoughtful question.'
+    subtitleEl.textContent = `It's time for today's quiz!`
     questionTextEl.textContent = state.question.question_text
     viewBtnEl.disabled = false
     loadAttempts()
