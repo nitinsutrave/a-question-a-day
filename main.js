@@ -122,7 +122,7 @@ const fetchQuestion = async () => {
     throw new Error('Missing function response body')
   }
 
-  let payload = parseResponseBody(payload);
+  let payload = parseResponseBody(execution.responseBody);
 
   return {
     question_id: payload.data.id,
