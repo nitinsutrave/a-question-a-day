@@ -107,29 +107,17 @@ const fetchQuestion = async () => {
     body: '{}'
   })
 
-  console.log('response')
-  console.log(typeof(response))
-  console.log(response)
-
   if (!response.ok) {
     throw new Error(`Function execution failed (${response.status})`)
   }
 
   const execution = await response.json()
 
-  console.log('execution')
-  console.log(typeof(execution))
-  console.log(execution)
-
   if (!execution.responseBody) {
     throw new Error('Missing function response body')
   }
 
   let payload = parseResponseBody(execution.responseBody);
-
-  console.log('payload')
-  console.log(typeof(payload))
-  console.log(payload)
 
   return {
     question_id: payload.data.id,
