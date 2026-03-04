@@ -22,7 +22,10 @@ const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
 
-const QUESTION_ENDPOINTS = ['./api/question', '/api/question']
+const APPWRITE_FUNCTION_ENDPOINT =
+  'https://cloud.appwrite.io/v1/functions/YOUR_FUNCTION_ID/executions'
+
+const APPWRITE_PROJECT_ID = 'YOUR_PROJECT_ID'
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
 const normalizeAnswer = (text) => text.trim().toLowerCase()
@@ -82,21 +85,33 @@ const parseQuestionPayload = (payload) => {
 }
 
 const fetchQuestion = async () => {
-  for (const endpoint of QUESTION_ENDPOINTS) {
-    try {
-      const response = await fetch(endpoint)
-      if (!response.ok) {
-        continue
-      }
+  const response = await fetch(APPWRITE_FUNCTION_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Appwrite-Project': APPWRITE_PROJECT_ID
+    },
+    body: JSON.stringify({})
+  })
 
-      const payload = await response.json()
-      return parseQuestionPayload(payload)
-    } catch {
-      // try next endpoint
-    }
+  if (!response.ok) {
+    throw new Error('Function execution failed')
   }
 
-  throw new Error('Unable to load question data')
+  const execution = await response.json()
+
+  // Appwrite returns the function output as a string
+  const payload = JSON.parse(execution.responseBody)
+
+  if (!payload.success) {
+    throw new Error('Invalid function response')
+  }
+
+  return {
+    question_id: payload.data.id,
+    question_text: payload.data.question,
+    valid_answers: payload.data.answers
+  }
 }
 
 viewBtnEl.addEventListener('click', () => {
