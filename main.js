@@ -100,11 +100,11 @@ const fetchQuestion = async () => {
       'Content-Type': 'application/json',
       'X-Appwrite-Project': APPWRITE_PROJECT_ID
     },
-    body: JSON.stringify({})
+    body: '{}'
   })
 
   if (!response.ok) {
-    throw new Error('Function execution failed')
+    throw new Error(`Function execution failed (${response.status})`)
   }
 
   const execution = await response.json()
@@ -113,19 +113,27 @@ const fetchQuestion = async () => {
     throw new Error('Missing function response body')
   }
 
-  let payload
+  let payload = execution.responseBody
 
-  try {
-    payload = JSON.parse(execution.responseBody)
-  } catch (err) {
-    throw new Error('Failed to parse function response')
+  // Appwrite returns a JSON string
+  if (typeof payload === 'string') {
+    payload = JSON.parse(payload)
+  }
+
+  // Sometimes still stringified (escaped JSON)
+  if (typeof payload === 'string') {
+    payload = JSON.parse(payload)
   }
 
   if (!payload.success || !payload.data) {
     throw new Error('Invalid function response')
   }
 
-  return parseQuestionPayload(payload.data)
+  return {
+    question_id: payload.data.id,
+    question_text: payload.data.question,
+    valid_answers: payload.data.answers
+  }
 }
 
 viewBtnEl.addEventListener('click', () => {
