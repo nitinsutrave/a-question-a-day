@@ -77,11 +77,20 @@ const render = () => {
 }
 
 const parseQuestionPayload = (payload) => {
-  if (!payload || typeof payload.question_id !== 'string' || typeof payload.question_text !== 'string' || !Array.isArray(payload.valid_answers)) {
+  if (
+    !payload ||
+    typeof payload.id !== 'string' ||
+    typeof payload.question !== 'string' ||
+    !Array.isArray(payload.answers)
+  ) {
     throw new Error('Invalid question payload format')
   }
 
-  return payload
+  return {
+    question_id: payload.id,
+    question_text: payload.question,
+    valid_answers: payload.answers
+  }
 }
 
 const fetchQuestion = async () => {
@@ -100,18 +109,23 @@ const fetchQuestion = async () => {
 
   const execution = await response.json()
 
-  // Appwrite returns the function output as a string
-  const payload = JSON.parse(execution.responseBody)
+  if (!execution.responseBody) {
+    throw new Error('Missing function response body')
+  }
 
-  if (!payload.success) {
+  let payload
+
+  try {
+    payload = JSON.parse(execution.responseBody)
+  } catch (err) {
+    throw new Error('Failed to parse function response')
+  }
+
+  if (!payload.success || !payload.data) {
     throw new Error('Invalid function response')
   }
 
-  return {
-    question_id: payload.data.id,
-    question_text: payload.data.question,
-    valid_answers: payload.data.answers
-  }
+  return parseQuestionPayload(payload.data)
 }
 
 viewBtnEl.addEventListener('click', () => {
