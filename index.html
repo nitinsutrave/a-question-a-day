@@ -22,16 +22,30 @@
         <div id="question-view" class="hidden">
           <article id="question-text" class="question-box"></article>
 
-          <label class="input-label" for="answer">Your answer</label>
-          <input
-            id="answer"
-            class="answer-input"
-            type="text"
-            placeholder="Type your answer here"
-          />
+          <div id="answer-form">
+            <label class="input-label" for="answer">Your answer</label>
+            <input
+              id="answer"
+              class="answer-input"
+              type="text"
+              placeholder="Type your answer here"
+            />
 
-          <button id="answer-btn" class="primary-btn">Answer</button>
+            <button id="answer-btn" class="primary-btn">Answer</button>
+          </div>
           <p id="attempts" class="attempts">Attempts: 0</p>
+
+          <div id="answered-block" class="hidden answered-block">
+            <p class="subtitle">Yay! You've already answered today's question</p>
+            <div class="share-row">
+              <button id="answered-share-btn" class="secondary-btn">Share 🚀</button>
+            </div>
+            <div class="trivia-box">
+              <h3>Did you know?</h3>
+              <p id="trivia-text"></p>
+              <p id="trivia-error" class="error hidden"></p>
+            </div>
+          </div>
         </div>
 
         <div id="success-view" class="hidden">

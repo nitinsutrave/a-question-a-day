@@ -3,6 +3,8 @@ const state = {
   question: { question_id: '', question_text: '', valid_answers: [] },
   attempts: 0,
   isCorrect: false,
+  isAnswered: false,
+  trivia: '',
 }
 
 const subtitleEl = document.getElementById('subtitle')
@@ -11,8 +13,13 @@ const welcomeViewEl = document.getElementById('welcome-view')
 const questionViewEl = document.getElementById('question-view')
 const successViewEl = document.getElementById('success-view')
 const questionTextEl = document.getElementById('question-text')
+const answerFormEl = document.getElementById('answer-form')
 const answerEl = document.getElementById('answer')
 const attemptsEl = document.getElementById('attempts')
+const answeredBlockEl = document.getElementById('answered-block')
+const answeredShareBtnEl = document.getElementById('answered-share-btn')
+const triviaTextEl = document.getElementById('trivia-text')
+const triviaErrorEl = document.getElementById('trivia-error')
 const viewBtnEl = document.getElementById('view-btn')
 const answerBtnEl = document.getElementById('answer-btn')
 const shareBtnEl = document.getElementById('share-btn')
@@ -23,9 +30,13 @@ const popupEl = document.querySelector('.popup')
 const APPWRITE_FUNCTION_ENDPOINT =
   'https://api.aquestionaday.in/v1/functions/69a872f1001651517b77/executions'
 
+const APPWRITE_TRIVIA_FUNCTION_ENDPOINT =
+  'https://api.aquestionaday.in/v1/functions/REPLACE_WITH_TRIVIA_FUNCTION_ID/executions'
+
 const APPWRITE_PROJECT_ID = '69a6f4ab003617880c6a'
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
+const answeredCookieKeyForQuestion = () => `is_answered_${state.question.question_id}`
 const normalizeAnswer = (text) => text.trim().toLowerCase()
 
 const getCookie = (name) => {
@@ -49,6 +60,15 @@ const loadAttempts = () => {
   attemptsEl.textContent = `Attempts: ${state.attempts}`
 }
 
+const loadAnsweredState = () => {
+  state.isAnswered = getCookie(answeredCookieKeyForQuestion()) === 'true'
+}
+
+const markAnswered = () => {
+  state.isAnswered = true
+  setCookie(answeredCookieKeyForQuestion(), 'true')
+}
+
 const incrementAttempts = () => {
   state.attempts += 1
   setCookie(cookieKeyForQuestion(), String(state.attempts))
@@ -69,31 +89,24 @@ const render = () => {
   questionViewEl.classList.toggle('hidden', !state.questionLoaded || state.isCorrect || !questionVisible)
   welcomeViewEl.classList.toggle('hidden', questionVisible || state.isCorrect)
   successViewEl.classList.toggle('hidden', !state.isCorrect)
-}
 
-const parseQuestionPayload = (payload) => {
-  if (
-    !payload ||
-    typeof payload.id !== 'string' ||
-    typeof payload.question !== 'string' ||
-    !Array.isArray(payload.answers)
-  ) {
-    throw new Error('Invalid question payload format')
-  }
-
-  return {
-    question_id: payload.id,
-    question_text: payload.question,
-    valid_answers: payload.answers
+  if (state.isAnswered) {
+    answerFormEl.classList.add('hidden')
+    attemptsEl.classList.add('hidden')
+    answeredBlockEl.classList.remove('hidden')
+  } else {
+    answerFormEl.classList.remove('hidden')
+    attemptsEl.classList.remove('hidden')
+    answeredBlockEl.classList.add('hidden')
   }
 }
 
 function parseResponseBody(obj) {
   try {
-    return JSON.parse(obj);
+    return JSON.parse(obj)
   } catch (err) {
-    console.error("Invalid JSON in responseBody:", err);
-    return null;
+    console.error('Invalid JSON in responseBody:', err)
+    return null
   }
 }
 
@@ -117,12 +130,60 @@ const fetchQuestion = async () => {
     throw new Error('Missing function response body')
   }
 
-  let payload = parseResponseBody(execution.responseBody);
+  const payload = parseResponseBody(execution.responseBody)
+
+  if (!payload || !payload.data) {
+    throw new Error('Invalid question payload format')
+  }
 
   return {
     question_id: payload.data.id,
     question_text: payload.data.question,
     valid_answers: payload.data.answers
+  }
+}
+
+const fetchTrivia = async () => {
+  const response = await fetch(APPWRITE_TRIVIA_FUNCTION_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Appwrite-Project': APPWRITE_PROJECT_ID
+    },
+    body: JSON.stringify({ question_id: state.question.question_id })
+  })
+
+  if (!response.ok) {
+    throw new Error(`Trivia function execution failed (${response.status})`)
+  }
+
+  const execution = await response.json()
+
+  if (!execution.responseBody) {
+    throw new Error('Missing trivia response body')
+  }
+
+  const payload = parseResponseBody(execution.responseBody)
+
+  if (!payload || typeof payload.trivia !== 'string') {
+    throw new Error('Invalid trivia payload format')
+  }
+
+  return payload.trivia
+}
+
+const loadTrivia = async () => {
+  triviaErrorEl.classList.add('hidden')
+  triviaTextEl.textContent = 'Loading trivia...'
+
+  try {
+    state.trivia = await fetchTrivia()
+    triviaTextEl.textContent = state.trivia
+  } catch (error) {
+    console.error(error)
+    triviaTextEl.textContent = ''
+    triviaErrorEl.textContent = 'Could not load trivia right now.'
+    triviaErrorEl.classList.remove('hidden')
   }
 }
 
@@ -138,7 +199,7 @@ answerEl.addEventListener('keyup', (event) => {
 })
 
 answerBtnEl.addEventListener('click', () => {
-  if (!state.questionLoaded) {
+  if (!state.questionLoaded || state.isAnswered) {
     return
   }
 
@@ -146,6 +207,7 @@ answerBtnEl.addEventListener('click', () => {
   const digest = CryptoJS.MD5(normalizeAnswer(answerEl.value)).toString()
 
   if (state.question.valid_answers.includes(digest)) {
+    markAnswered()
     state.isCorrect = true
     showIncorrectPopup(false)
     render()
@@ -159,7 +221,7 @@ popupBackdropEl.addEventListener('click', () => showIncorrectPopup(false))
 tryAgainBtnEl.addEventListener('click', () => showIncorrectPopup(false))
 popupEl.addEventListener('click', (event) => event.stopPropagation())
 
-shareBtnEl.addEventListener('click', async () => {
+const onShare = async () => {
   if (navigator.share) {
     try {
       await navigator.share({ text: shareText() })
@@ -170,7 +232,10 @@ shareBtnEl.addEventListener('click', async () => {
   }
 
   window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, '_blank', 'noopener,noreferrer')
-})
+}
+
+shareBtnEl.addEventListener('click', onShare)
+answeredShareBtnEl.addEventListener('click', onShare)
 
 const loadQuestion = async () => {
   try {
@@ -181,6 +246,12 @@ const loadQuestion = async () => {
     questionTextEl.textContent = state.question.question_text
     viewBtnEl.disabled = false
     loadAttempts()
+    loadAnsweredState()
+
+    if (state.isAnswered) {
+      await loadTrivia()
+    }
+
     render()
   } catch (error) {
     console.error(error)
