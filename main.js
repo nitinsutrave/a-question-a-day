@@ -1,10 +1,9 @@
 const state = {
   questionLoaded: false,
-  question: { question_id: '', question_text: '', valid_answers: [] },
+  question: { question_id: '', question_text: '', valid_answers: [], did_you_know: '' },
   attempts: 0,
   isCorrect: false,
-  isAnswered: false,
-  trivia: '',
+  isAnswered: false
 }
 
 const subtitleEl = document.getElementById('subtitle')
@@ -19,7 +18,6 @@ const attemptsEl = document.getElementById('attempts')
 const answeredBlockEl = document.getElementById('answered-block')
 const answeredShareBtnEl = document.getElementById('answered-share-btn')
 const triviaTextEl = document.getElementById('trivia-text')
-const triviaErrorEl = document.getElementById('trivia-error')
 const viewBtnEl = document.getElementById('view-btn')
 const answerBtnEl = document.getElementById('answer-btn')
 const shareBtnEl = document.getElementById('share-btn')
@@ -29,9 +27,6 @@ const popupEl = document.querySelector('.popup')
 
 const APPWRITE_FUNCTION_ENDPOINT =
   'https://api.aquestionaday.in/v1/functions/69a872f1001651517b77/executions'
-
-const APPWRITE_TRIVIA_FUNCTION_ENDPOINT =
-  'https://api.aquestionaday.in/v1/functions/REPLACE_WITH_TRIVIA_FUNCTION_ID/executions'
 
 const APPWRITE_PROJECT_ID = '69a6f4ab003617880c6a'
 
@@ -50,7 +45,7 @@ const getCookie = (name) => {
 }
 
 const setCookie = (name, value, days = 365) => {
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+  const expires = new Date(Date.now() + days * 86400000).toUTCString()
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
 }
 
@@ -86,6 +81,7 @@ const showIncorrectPopup = (show) => {
 
 const render = () => {
   const questionVisible = questionViewEl.dataset.visible === 'true'
+
   questionViewEl.classList.toggle('hidden', !state.questionLoaded || state.isCorrect || !questionVisible)
   welcomeViewEl.classList.toggle('hidden', questionVisible || state.isCorrect)
   successViewEl.classList.toggle('hidden', !state.isCorrect)
@@ -139,51 +135,8 @@ const fetchQuestion = async () => {
   return {
     question_id: payload.data.id,
     question_text: payload.data.question,
-    valid_answers: payload.data.answers
-  }
-}
-
-const fetchTrivia = async () => {
-  const response = await fetch(APPWRITE_TRIVIA_FUNCTION_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Appwrite-Project': APPWRITE_PROJECT_ID
-    },
-    body: JSON.stringify({ question_id: state.question.question_id })
-  })
-
-  if (!response.ok) {
-    throw new Error(`Trivia function execution failed (${response.status})`)
-  }
-
-  const execution = await response.json()
-
-  if (!execution.responseBody) {
-    throw new Error('Missing trivia response body')
-  }
-
-  const payload = parseResponseBody(execution.responseBody)
-
-  if (!payload || typeof payload.trivia !== 'string') {
-    throw new Error('Invalid trivia payload format')
-  }
-
-  return payload.trivia
-}
-
-const loadTrivia = async () => {
-  triviaErrorEl.classList.add('hidden')
-  triviaTextEl.textContent = 'Loading trivia...'
-
-  try {
-    state.trivia = await fetchTrivia()
-    triviaTextEl.textContent = state.trivia
-  } catch (error) {
-    console.error(error)
-    triviaTextEl.textContent = ''
-    triviaErrorEl.textContent = 'Could not load trivia right now.'
-    triviaErrorEl.classList.remove('hidden')
+    valid_answers: payload.data.answers,
+    did_you_know: payload.data.did_you_know
   }
 }
 
@@ -199,16 +152,18 @@ answerEl.addEventListener('keyup', (event) => {
 })
 
 answerBtnEl.addEventListener('click', () => {
-  if (!state.questionLoaded || state.isAnswered) {
-    return
-  }
+  if (!state.questionLoaded || state.isAnswered) return
 
   incrementAttempts()
+
   const digest = CryptoJS.MD5(normalizeAnswer(answerEl.value)).toString()
 
   if (state.question.valid_answers.includes(digest)) {
     markAnswered()
     state.isCorrect = true
+
+    triviaTextEl.textContent = state.question.did_you_know || ''
+
     showIncorrectPopup(false)
     render()
     return
@@ -226,12 +181,14 @@ const onShare = async () => {
     try {
       await navigator.share({ text: shareText() })
       return
-    } catch {
-      // ignore canceled share
-    }
+    } catch {}
   }
 
-  window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, '_blank', 'noopener,noreferrer')
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(shareText())}`,
+    '_blank',
+    'noopener,noreferrer'
+  )
 }
 
 shareBtnEl.addEventListener('click', onShare)
@@ -244,12 +201,14 @@ const loadQuestion = async () => {
 
     subtitleEl.textContent = `Let's get quizzing`
     questionTextEl.textContent = state.question.question_text
+
     viewBtnEl.disabled = false
+
     loadAttempts()
     loadAnsweredState()
 
     if (state.isAnswered) {
-      await loadTrivia()
+      triviaTextEl.textContent = state.question.did_you_know || ''
     }
 
     render()
@@ -261,5 +220,6 @@ const loadQuestion = async () => {
 }
 
 questionViewEl.dataset.visible = 'false'
+
 render()
 loadQuestion()
