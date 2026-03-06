@@ -21,6 +21,7 @@ const triviaTextEl = document.getElementById('trivia-text')
 const viewBtnEl = document.getElementById('view-btn')
 const answerBtnEl = document.getElementById('answer-btn')
 const shareBtnEl = document.getElementById('share-btn')
+const successHomeBtnEl = document.getElementById('success-home-btn')
 const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
@@ -193,6 +194,13 @@ const onShare = async () => {
 
 shareBtnEl.addEventListener('click', onShare)
 answeredShareBtnEl.addEventListener('click', onShare)
+
+successHomeBtnEl.addEventListener('click', () => {
+  state.isCorrect = false
+  questionViewEl.dataset.visible = 'true'
+  render()
+})
+
 
 const loadQuestion = async () => {
   try {
