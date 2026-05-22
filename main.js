@@ -26,10 +26,8 @@ const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
 
-const APPWRITE_FUNCTION_ENDPOINT =
-  'https://api.aquestionaday.in/v1/functions/69a872f1001651517b77/executions'
-
-const APPWRITE_PROJECT_ID = '69a6f4ab003617880c6a'
+const POCKETBASE_ENDPOINT =
+  'https://api.aquestionaday.in/api/collections/questions/records?page=1&perPage=1&sort=-created'
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
 const answeredCookieKeyForQuestion = () => `is_answered_${state.question.question_id}`
@@ -98,46 +96,31 @@ const render = () => {
   }
 }
 
-function parseResponseBody(obj) {
-  try {
-    return JSON.parse(obj)
-  } catch (err) {
-    console.error('Invalid JSON in responseBody:', err)
-    return null
-  }
+const getAnswersList = (value) => {
+  if (Array.isArray(value)) return value
+  if (value && Array.isArray(value.answers)) return value.answers
+  return []
 }
 
 const fetchQuestion = async () => {
-  const response = await fetch(APPWRITE_FUNCTION_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Appwrite-Project': APPWRITE_PROJECT_ID
-    },
-    body: '{}'
-  })
+  const response = await fetch(POCKETBASE_ENDPOINT)
 
   if (!response.ok) {
-    throw new Error(`Function execution failed (${response.status})`)
+    throw new Error(`Question fetch failed (${response.status})`)
   }
 
-  const execution = await response.json()
+  const payload = await response.json()
+  const row = payload?.items?.[0]
 
-  if (!execution.responseBody) {
-    throw new Error('Missing function response body')
-  }
-
-  const payload = parseResponseBody(execution.responseBody)
-
-  if (!payload || !payload.data) {
-    throw new Error('Invalid question payload format')
+  if (!row) {
+    throw new Error('No question found in PocketBase response')
   }
 
   return {
-    question_id: payload.data.id,
-    question_text: payload.data.question,
-    valid_answers: payload.data.answers,
-    did_you_know: payload.data.did_you_know
+    question_id: row.id,
+    question_text: row.question || '',
+    valid_answers: getAnswersList(row.valid_answers),
+    did_you_know: row.did_you_know || ''
   }
 }
 
