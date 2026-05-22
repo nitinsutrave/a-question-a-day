@@ -26,8 +26,7 @@ const popupBackdropEl = document.getElementById('popup-backdrop')
 const tryAgainBtnEl = document.getElementById('try-again-btn')
 const popupEl = document.querySelector('.popup')
 
-const POCKETBASE_ENDPOINT =
-  'https://api.aquestionaday.in/api/collections/questions/records?page=1&perPage=1&sort=-created'
+const QUESTION_API_ENDPOINT = 'https://api.aquestionaday.in/get_question'
 
 const cookieKeyForQuestion = () => `attempts_${state.question.question_id}`
 const answeredCookieKeyForQuestion = () => `is_answered_${state.question.question_id}`
@@ -103,17 +102,17 @@ const getAnswersList = (value) => {
 }
 
 const fetchQuestion = async () => {
-  const response = await fetch(POCKETBASE_ENDPOINT)
+  const response = await fetch(QUESTION_API_ENDPOINT)
 
   if (!response.ok) {
     throw new Error(`Question fetch failed (${response.status})`)
   }
 
   const payload = await response.json()
-  const row = payload?.items?.[0]
+  const row = payload?.data
 
-  if (!row) {
-    throw new Error('No question found in PocketBase response')
+  if (!payload?.success || !row) {
+    throw new Error('No question found in API response')
   }
 
   return {
