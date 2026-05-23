@@ -2,8 +2,7 @@ const { useEffect, useMemo, useState } = React
 
 const QUESTION_API_ENDPOINT = 'https://api.aquestionaday.in/get_question'
 const INCREASE_ATTEMPT_API = 'https://api.aquestionaday.in/increase_attempt'
-const LEADERBOARD_API = 'https://api.aquestionaday.in/leaderboard'
-const USERS_STORAGE_KEY = 'aqad_users'
+const POCKETBASE_BASE_URL = 'https://api.aquestionaday.in'
 const SESSION_STORAGE_KEY = 'aqad_session'
 
 const getAnswersList = (value) => {
@@ -29,16 +28,6 @@ const setCookie = (name, value, days = 365) => {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
 }
 
-const getUsers = () => {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
-
-const saveUsers = (users) => localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
-
 function App() {
   const [questionLoaded, setQuestionLoaded] = useState(false)
   const [question, setQuestion] = useState({ question_id: '', question_text: '', valid_answers: [], did_you_know: '' })
@@ -55,20 +44,43 @@ function App() {
   const [authError, setAuthError] = useState('')
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardError, setLeaderboardError] = useState('')
+  const [myAttempts, setMyAttempts] = useState(null)
 
   const cookieKeyForQuestion = useMemo(() => `attempts_${question.question_id}`, [question.question_id])
   const answeredCookieKeyForQuestion = useMemo(() => `is_answered_${question.question_id}`, [question.question_id])
 
-  const loadLeaderboard = async (questionId) => {
+  const fetchAttemptsFromPocketBase = async (questionId, currentSession = session) => {
+    if (!questionId) return
+
     try {
       setLeaderboardError('')
-      const response = await fetch(`${LEADERBOARD_API}?question_id=${encodeURIComponent(questionId)}`)
-      if (!response.ok) throw new Error('Leaderboard unavailable')
-      const payload = await response.json()
-      const rows = Array.isArray(payload?.data) ? payload.data : []
-      setLeaderboard(rows.slice(0, 10))
+
+      const leaderboardResponse = await fetch(
+        `${POCKETBASE_BASE_URL}/api/collections/attempts/records?page=1&perPage=10&filter=${encodeURIComponent(`question='${questionId}' && has_solved=true`)}&sort=+attempts_taken,+created&expand=user`
+      )
+
+      if (!leaderboardResponse.ok) throw new Error('Leaderboard unavailable')
+
+      const leaderboardPayload = await leaderboardResponse.json()
+      setLeaderboard(Array.isArray(leaderboardPayload?.items) ? leaderboardPayload.items : [])
+
+      if (currentSession?.record?.id) {
+        const meResponse = await fetch(
+          `${POCKETBASE_BASE_URL}/api/collections/attempts/records?page=1&perPage=1&filter=${encodeURIComponent(`question='${questionId}' && user='${currentSession.record.id}'`)}&sort=-updated`,
+          { headers: currentSession.token ? { Authorization: `Bearer ${currentSession.token}` } : {} }
+        )
+
+        if (!meResponse.ok) throw new Error('Could not fetch user attempts')
+
+        const mePayload = await meResponse.json()
+        const mine = mePayload?.items?.[0]
+        setMyAttempts(mine?.attempts_taken ?? 0)
+      } else {
+        setMyAttempts(null)
+      }
     } catch {
       setLeaderboard([])
+      setMyAttempts(null)
       setLeaderboardError('Leaderboard is currently unavailable.')
     }
   }
@@ -97,7 +109,7 @@ function App() {
 
         const answered = getCookie(`is_answered_${loadedQuestion.question_id}`) === 'true'
         setIsAnswered(answered)
-        if (answered) loadLeaderboard(loadedQuestion.question_id)
+        if (answered) fetchAttemptsFromPocketBase(loadedQuestion.question_id)
       } catch (e) {
         console.error(e)
         setError("Could not load today's question. Please refresh and try again.")
@@ -122,39 +134,77 @@ function App() {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, '_blank', 'noopener,noreferrer')
   }
 
-  const registerOrLogin = (event) => {
+  const loginUser = async (email, password) => {
+    const response = await fetch(`${POCKETBASE_BASE_URL}/api/collections/users/auth-with-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identity: email, password })
+    })
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err?.message || 'Login failed')
+    }
+
+    return response.json()
+  }
+
+  const registerOrLogin = async (event) => {
     event.preventDefault()
     setAuthError('')
+
     if (!form.email || !form.password || !form.screenName) {
       setAuthError('Please fill all fields.')
       return
     }
 
-    const users = getUsers()
-    const existing = users.find((u) => u.email.toLowerCase() === form.email.toLowerCase())
+    try {
+      let authPayload
+      try {
+        authPayload = await loginUser(form.email, form.password)
+      } catch {
+        const registerResponse = await fetch(`${POCKETBASE_BASE_URL}/api/collections/users/records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+            passwordConfirm: form.password,
+            name: form.screenName,
+            screen_name: form.screenName
+          })
+        })
 
-    if (existing && existing.password !== form.password) {
-      setAuthError('Wrong password for this email.')
-      return
+        if (!registerResponse.ok) {
+          const err = await registerResponse.json().catch(() => ({}))
+          throw new Error(err?.message || 'Registration failed')
+        }
+
+        authPayload = await loginUser(form.email, form.password)
+      }
+
+      const nextSession = {
+        token: authPayload.token,
+        record: authPayload.record
+      }
+
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession))
+      setSession(nextSession)
+      setShowAuthModal(false)
+
+      if (question.question_id && isAnswered) {
+        fetchAttemptsFromPocketBase(question.question_id, nextSession)
+      }
+    } catch (e) {
+      setAuthError(e.message || 'Login failed. Please try again.')
     }
-
-    let current = existing
-    if (!existing) {
-      current = { email: form.email, password: form.password, screenName: form.screenName, createdAt: Date.now() }
-      users.push(current)
-      saveUsers(users)
-    }
-
-    const sessionObj = { email: current.email, screenName: current.screenName }
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionObj))
-    setSession(sessionObj)
-    setShowAuthModal(false)
   }
 
   const increaseAttemptForLoggedIn = async () => {
-    if (!session?.email || !question.question_id) return
+    if (!session?.record?.id || !question.question_id) return
     try {
-      await fetch(`${INCREASE_ATTEMPT_API}?question_id=${encodeURIComponent(question.question_id)}&email=${encodeURIComponent(session.email)}&screen_name=${encodeURIComponent(session.screenName || '')}`)
+      const headers = session.token ? { Authorization: `Bearer ${session.token}` } : {}
+      await fetch(`${INCREASE_ATTEMPT_API}?question_id=${encodeURIComponent(question.question_id)}`, { headers })
     } catch (e) {
       console.warn('Attempt tracking failed', e)
     }
@@ -175,7 +225,7 @@ function App() {
       setCookie(answeredCookieKeyForQuestion, 'true')
       setIsCorrect(true)
       setShowPopup(false)
-      loadLeaderboard(question.question_id)
+      fetchAttemptsFromPocketBase(question.question_id)
       return
     }
 
@@ -185,6 +235,7 @@ function App() {
   const onLogout = () => {
     localStorage.removeItem(SESSION_STORAGE_KEY)
     setSession(null)
+    setMyAttempts(null)
   }
 
   return (
@@ -192,7 +243,7 @@ function App() {
       <section className="card">
         <div className="top-row">
           <button className="secondary-btn auth-btn" onClick={() => (session ? onLogout() : setShowAuthModal(true))}>
-            {session ? `Log out (${session.screenName})` : 'Log in'}
+            {session ? `Log out (${session.record?.screen_name || session.record?.name || 'User'})` : 'Log in'}
           </button>
         </div>
         <h1>A Question a Day</h1>
@@ -222,7 +273,7 @@ function App() {
                 <p className="subtitle">Yay! You've already answered today's question</p>
                 <div className="share-row"><button className="secondary-btn" onClick={onShare}>Share 🚀</button></div>
                 <div className="trivia-box"><h3>Did you know?</h3><p>{question.did_you_know}</p></div>
-                <Leaderboard leaderboard={leaderboard} error={leaderboardError} />
+                <Leaderboard leaderboard={leaderboard} error={leaderboardError} myAttempts={myAttempts} session={session} />
               </div>
             )}
           </div>
@@ -237,7 +288,7 @@ function App() {
               <button className="secondary-btn" onClick={() => setShowQuestion(true)}>Home</button>
             </div>
             <div className="trivia-box"><h3>Did you know?</h3><p>{question.did_you_know}</p></div>
-            <Leaderboard leaderboard={leaderboard} error={leaderboardError} />
+            <Leaderboard leaderboard={leaderboard} error={leaderboardError} myAttempts={myAttempts} session={session} />
           </div>
         )}
       </section>
@@ -269,17 +320,20 @@ function App() {
   )
 }
 
-function Leaderboard({ leaderboard, error }) {
+function Leaderboard({ leaderboard, error, myAttempts, session }) {
   return (
     <div className="trivia-box leaderboard-box">
       <h3>Top 10 Leaderboard</h3>
+      {session?.record?.id && myAttempts !== null && (
+        <p className="my-attempts">Your attempts: <strong>{myAttempts}</strong></p>
+      )}
       {error && <p className="error">{error}</p>}
       {!error && leaderboard.length === 0 && <p>No leaderboard data yet.</p>}
       {!error && leaderboard.length > 0 && (
         <ol>
           {leaderboard.map((row, idx) => (
-            <li key={`${row.email || row.screen_name || idx}-${idx}`}>
-              {(row.screen_name || row.name || 'Anonymous')} — {row.attempts ?? row.total_attempts ?? '-'} attempts
+            <li key={`${row.id || idx}-${idx}`}>
+              {(row?.expand?.user?.screen_name || row?.expand?.user?.name || 'Anonymous')} — {row.attempts_taken ?? '-'} attempts
             </li>
           ))}
         </ol>
