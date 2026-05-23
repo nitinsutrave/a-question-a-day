@@ -166,7 +166,7 @@ h2 {
 
 .top-row {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   margin-bottom: 0.5rem;
 }
 
@@ -196,3 +196,5 @@ h2 {
 }
 
 .my-attempts { margin: 0 0 0.75rem; color: #44403c; }
+
+.auth-mode-row { margin-bottom: 0.75rem; }
