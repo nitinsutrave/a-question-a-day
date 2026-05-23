@@ -163,3 +163,34 @@ h2 {
   margin: 0;
   line-height: 1.5;
 }
+
+.top-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.auth-btn {
+  width: auto;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.auth-modal h3 {
+  margin-top: 0;
+}
+
+.leaderboard-box {
+  margin-top: 1rem;
+}
+
+.leaderboard-box ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.leaderboard-note {
+  margin-top: 0.75rem !important;
+  font-size: 0.9rem;
+  color: #57534e;
+}
