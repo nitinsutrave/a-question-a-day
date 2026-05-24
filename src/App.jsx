@@ -398,17 +398,16 @@ export default function App() {
         <section className="card">
           <h1>A Question a Day</h1>
 
-          {loadingQuestion && (
-            <p className="subtitle">Loading today's question…</p>
-          )}
-          {questionError && <p className="error">{questionError}</p>}
+          {loadingQuestion && <p className="subtitle">Loading today's question…</p>}
+          {questionError   && <p className="error">{questionError}</p>}
 
           {question && !loadingQuestion && (
             <>
+              <p className="subtitle">Let's get quizzing</p>
+
               {/* Home */}
               {view === "home" && (
-                <div className="view">
-                  <p className="subtitle">A new question every day.<br />How fast can you solve it?</p>
+                <div className="view" style={{ textAlign: "center" }}>
                   <button className="primary-btn" onClick={() => setView("question")}>
                     View Question
                   </button>
@@ -458,14 +457,12 @@ export default function App() {
                     <ShareButton text={shareText} />
                     <button className="secondary-btn" onClick={() => setView("home")}>Home</button>
                   </div>
-
                   {question.did_you_know && (
                     <div className="trivia-box">
                       <h3>Did you know?</h3>
                       <p>{question.did_you_know}</p>
                     </div>
                   )}
-
                   <Leaderboard questionId={question.id} />
                 </div>
               )}
@@ -481,14 +478,12 @@ export default function App() {
                     <ShareButton text={shareText} />
                     <button className="secondary-btn" onClick={() => setView("home")}>Home</button>
                   </div>
-
                   {question.did_you_know && (
                     <div className="trivia-box">
                       <h3>Did you know?</h3>
                       <p>{question.did_you_know}</p>
                     </div>
                   )}
-
                   <Leaderboard questionId={question.id} />
                 </div>
               )}
