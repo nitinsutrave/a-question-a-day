@@ -4,7 +4,7 @@
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: #f0f0f0;
+  background: #ebebeb;
   color: #1a1a1a;
   min-height: 100vh;
   line-height: 1.5;
@@ -22,59 +22,68 @@ body {
 .card {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 40px 36px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.09);
+  padding: 44px 40px 40px;
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
+  text-align: center;
 }
 
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
 .card h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  color: #1a1a1a;
 }
 
 .card h2 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 6px;
+  text-align: center;
 }
 
 /* ─── Typography ─────────────────────────────────────────────────────────────── */
 .subtitle {
   font-size: 0.95rem;
-  color: #555;
+  color: #666;
   margin-bottom: 24px;
   line-height: 1.5;
 }
 
 .subtle-text {
   font-size: 0.88rem;
-  color: #888;
+  color: #999;
   padding: 8px 0;
+  text-align: center;
 }
 
 .error {
   color: #c0392b;
   font-size: 0.9rem;
   margin-top: 6px;
+  text-align: center;
 }
 
 /* ─── View container ─────────────────────────────────────────────────────────── */
 .view {
-  margin-top: 12px;
+  margin-top: 8px;
+  text-align: left;
 }
 
 /* ─── Question box ───────────────────────────────────────────────────────────── */
 .question-box {
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: 0.975rem;
+  line-height: 1.75;
   color: #1a1a1a;
-  background: #f8f8f8;
-  border-radius: 10px;
-  padding: 16px 18px;
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 18px 20px;
   margin-bottom: 20px;
+  text-align: left;
 }
 
 /* ─── Answer form ────────────────────────────────────────────────────────────── */
@@ -86,51 +95,56 @@ body {
 }
 
 .input-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #888;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a1a;
 }
 
 .answer-input {
   font-family: inherit;
-  font-size: 1rem;
-  padding: 11px 14px;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
+  font-size: 0.975rem;
+  padding: 12px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
   background: #fff;
   color: #1a1a1a;
   outline: none;
   transition: border-color 0.15s;
+  width: 100%;
 }
 .answer-input:focus {
-  border-color: #333;
+  border-color: #aaa;
+}
+.answer-input::placeholder {
+  color: #bbb;
 }
 
 .attempts {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: #999;
-  margin-top: 4px;
+  margin-top: 6px;
+  text-align: center;
 }
 
 /* ─── Buttons ────────────────────────────────────────────────────────────────── */
 .primary-btn {
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.975rem;
   font-weight: 600;
   color: #fff;
-  background: #1a1a1a;
+  background: #1b2333;
   border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
+  border-radius: 8px;
+  padding: 14px 24px;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
-  align-self: flex-start;
+  width: 100%;
+  display: block;
   margin-top: 4px;
+  text-align: center;
 }
-.primary-btn:hover:not(:disabled) { background: #333; }
-.primary-btn:active:not(:disabled) { transform: scale(0.98); }
+.primary-btn:hover:not(:disabled) { background: #2d3a50; }
+.primary-btn:active:not(:disabled) { transform: scale(0.99); }
 .primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .secondary-btn {
@@ -138,14 +152,14 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   color: #1a1a1a;
-  background: #f0f0f0;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
+  background: #f3f3f3;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.secondary-btn:hover { background: #e5e5e5; border-color: #bbb; }
+.secondary-btn:hover { background: #e8e8e8; border-color: #bbb; }
 
 .link-btn {
   background: none;
@@ -169,33 +183,35 @@ body {
 .popup-inline {
   background: #fff5f5;
   border: 1.5px solid #fcc;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.9rem;
   color: #c0392b;
   margin: 8px 0;
+  text-align: center;
 }
 
 /* ─── Trivia box ─────────────────────────────────────────────────────────────── */
 .trivia-box {
   background: #fffdf0;
-  border: 1.5px solid #ede8c0;
-  border-radius: 10px;
+  border: 1.5px solid #e8de9a;
+  border-radius: 8px;
   padding: 16px 18px;
   margin-bottom: 24px;
+  text-align: left;
 }
 .trivia-box h3 {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: #b8960c;
   margin-bottom: 6px;
 }
 .trivia-box p {
   font-size: 0.9rem;
   color: #555;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 /* ─── Leaderboard ────────────────────────────────────────────────────────────── */
@@ -228,13 +244,13 @@ body {
 
 .leaderboard-row--first {
   background: #fffbee;
-  border-color: #e8d060;
+  border-color: #e5d060;
 }
 
 .leaderboard-rank {
   width: 20px;
   font-weight: 700;
-  color: #999;
+  color: #bbb;
   flex-shrink: 0;
   font-size: 0.82rem;
 }
@@ -244,6 +260,7 @@ body {
   flex: 1;
   font-weight: 500;
   color: #1a1a1a;
+  text-align: left;
 }
 
 .leaderboard-attempts {
@@ -265,7 +282,7 @@ body {
 
 .auth-username {
   font-size: 0.8rem;
-  color: #777;
+  color: #888;
 }
 
 .auth-btn {
@@ -287,7 +304,7 @@ body {
 .popup-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -306,6 +323,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  text-align: left;
 }
 
 .modal-close {
@@ -316,7 +334,7 @@ body {
   border: none;
   font-size: 1rem;
   cursor: pointer;
-  color: #aaa;
+  color: #bbb;
   line-height: 1;
   padding: 4px;
 }
@@ -335,33 +353,33 @@ body {
   gap: 4px;
 }
 .field label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #888;
 }
 .field input {
   font-family: inherit;
   font-size: 0.95rem;
   padding: 10px 12px;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid #e0e0e0;
   border-radius: 8px;
   background: #fff;
   color: #1a1a1a;
   outline: none;
   transition: border-color 0.15s;
 }
-.field input:focus { border-color: #333; }
+.field input:focus { border-color: #aaa; }
 
 .modal-switch {
   font-size: 0.83rem;
-  color: #888;
+  color: #999;
   text-align: center;
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .card { padding: 28px 20px; }
+  .card { padding: 32px 20px 28px; }
   .auth-bar { top: 10px; right: 12px; }
 }
